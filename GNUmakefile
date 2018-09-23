@@ -122,13 +122,18 @@ $(SUBS):
 
 clean: SUBTARGET=clean
 clean: $(SUBS)
-	rm -rf $(BUILDDIR)
+	rm -rf $(BUILDDIR) profiler.report
 
 realclean: clean
 	rm -rf $(CACHEDIR)
 
 launch: buildenv $(SUBS)
 	cd $(BUILDDIR) && $(MONO) $(MONOFLAGS) DwarfCorpFNA.mono
+
+# https://www.mono-project.com/docs/debug+profile/profile/profiler/
+profile: MONOFLAGS+=--profile=log:alloc,calls,report,output=../profiler.report
+profile: launch
+	@echo Mono profiler report written to: profiler.report
 
 .PHONY: all buildenv fnalibs clean launch $(SUBS)
 
