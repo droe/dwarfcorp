@@ -20,18 +20,28 @@ APP_DEPS:=	FNA.dll \
 		Content
 STEAM_DEPS:=	Steamworks.NET.dll \
 		steam_appid.txt
-OSX_DEPS:=	monoconfig \
-		monomachineconfig \
-		osx
 APP_DEPS:=	$(addprefix $(OBJDIR)/,$(APP_DEPS))
 STEAM_DEPS:=	$(addprefix $(OBJDIR)/,$(STEAM_DEPS))
-OSX_DEPS:=	$(addprefix $(OBJDIR)/,$(OSX_DEPS))
 
 UNAME_S:=	$(shell uname -s)
+UNAME_M:=	$(shell uname -m)
+
+FNALIBSDIR:=	DwarfCorp/DwarfCorpFNA/FNA_libs
 ifeq ($(UNAME_S),Darwin)
-ALL_DEPS:=	$(APP_DEPS) $(STEAM_DEPS) $(OSX_DEPS)
+FNALIBS:=	$(FNALIBSDIR)/osx/mono* \
+		$(FNALIBSDIR)/osx/osx
 else
-$(error $(UNAME_S) not supported yet)
+ifeq ($(UNAME_S),Linux)
+ifeq ($(UNAME_M),x86_64)
+FNALIBS:=	$(FNALIBSDIR)/lib64/mono* \
+		$(FNALIBSDIR)/lib64/lib*
+else
+FNALIBS:=	$(FNALIBSDIR)/lib/mono* \
+		$(FNALIBSDIR)/lib/lib*
+endif
+else
+$(error $(UNAME_S) $(UNAME_M) not supported)
+endif
 endif
 
 SUBS=		DwarfCorp/DwarfCorpXNA DwarfCorp/LibNoise YarnSpinner
@@ -47,16 +57,12 @@ $(APP_DEPS): $(OBJDIR)/%: $(OBJDIR)/_app_/Contents/MacOS/%
 	ln -sf $(<:$(OBJDIR)/%=%) $@
 
 $(STEAM_DEPS):
-	rm -f $@
 	cp SteamWorks/$(notdir $@) $@
 
-ifeq ($(UNAME_S),Darwin)
-$(OSX_DEPS):
-	rm -rf $@
-	cp -r DwarfCorp/DwarfCorpFNA/FNA_libs/osx/$(notdir $@) $@
-endif
+fnalibs:
+	cp -r $(FNALIBS) $(OBJDIR)
 
-objdir: $(OBJDIR) $(ALL_DEPS)
+objdir: $(OBJDIR) $(APP_DEPS) $(STEAM_DEPS) fnalibs
 
 DwarfCorp/DwarfCorpXNA: DwarfCorp/LibNoise YarnSpinner
 
@@ -70,5 +76,5 @@ clean: $(SUBS)
 launch: objdir $(SUBS)
 	cd $(OBJDIR) && DYLD_LIBRARY_PATH=./osx $(MONO) $(MONOFLAGS) DwarfCorpFNA.mono.osx
 
-.PHONY: all objdir clean launch $(SUBS)
+.PHONY: all objdir fnalibs clean launch $(SUBS)
 
