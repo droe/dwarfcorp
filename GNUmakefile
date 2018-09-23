@@ -6,9 +6,6 @@ MONOFLAGS+=	--debug
 
 OBJDIR:=	obj.mono
 
-# use app bundle installed by Steam by default
-APPBUNDLE?=	"$(HOME)/Library/Application Support/Steam/steamapps/common/DwarfCorp/DwarfCorp.app"
-
 APP_DEPS:=	FNA.dll \
 		FNA.dll.config \
 		Newtonsoft.Json.dll \
@@ -28,14 +25,17 @@ UNAME_M:=	$(shell uname -m)
 
 FNALIBSDIR:=	DwarfCorp/DwarfCorpFNA/FNA_libs
 ifeq ($(UNAME_S),Darwin)
+APPDIR?=	"$(HOME)/Library/Application Support/Steam/steamapps/common/DwarfCorp/DwarfCorp.app/Contents/MacOS"
 FNALIBS:=	$(FNALIBSDIR)/osx/mono* \
 		$(FNALIBSDIR)/osx/osx
 else
 ifeq ($(UNAME_S),Linux)
 ifeq ($(UNAME_M),x86_64)
+APPDIR?=	"$(HOME)/.steam/steam/SteamApps/common/DwarfCorp/linux64"
 FNALIBS:=	$(FNALIBSDIR)/lib64/mono* \
 		$(FNALIBSDIR)/lib64/lib*
 else
+APPDIR?=	"$(HOME)/.steam/steam/SteamApps/common/DwarfCorp/linux32"
 FNALIBS:=	$(FNALIBSDIR)/lib/mono* \
 		$(FNALIBSDIR)/lib/lib*
 endif
@@ -51,9 +51,9 @@ all: objdir $(SUBS)
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
-	ln -s $(APPBUNDLE) $(OBJDIR)/_app_
+	ln -s $(APPDIR) $(OBJDIR)/_app_
 
-$(APP_DEPS): $(OBJDIR)/%: $(OBJDIR)/_app_/Contents/MacOS/%
+$(APP_DEPS): $(OBJDIR)/%: $(OBJDIR)/_app_/%
 	ln -sf $(<:$(OBJDIR)/%=%) $@
 
 $(STEAM_DEPS):
