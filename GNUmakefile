@@ -27,7 +27,7 @@ FNALIBSDIR:=	DwarfCorp/DwarfCorpFNA/FNA_libs
 ifeq ($(UNAME_S),Darwin)
 APPDIR?=	"$(HOME)/Library/Application Support/Steam/steamapps/common/DwarfCorp/DwarfCorp.app/Contents/MacOS"
 FNALIBS:=	$(FNALIBSDIR)/osx/mono* \
-		$(FNALIBSDIR)/osx/osx
+		$(FNALIBSDIR)/osx/osx/*
 else
 ifeq ($(UNAME_S),Linux)
 ifeq ($(UNAME_M),x86_64)
@@ -74,7 +74,7 @@ clean: $(SUBS)
 	rm -rf $(OBJDIR)
 
 launch: objdir $(SUBS)
-	cd $(OBJDIR) && DYLD_LIBRARY_PATH=./osx $(MONO) $(MONOFLAGS) DwarfCorpFNA.mono.osx
+	cd $(OBJDIR) && $(MONO) $(MONOFLAGS) DwarfCorpFNA.mono.osx
 
 .PHONY: all objdir fnalibs clean launch $(SUBS)
 
