@@ -6,9 +6,7 @@ MONOFLAGS+=	--debug
 
 BUILDDIR:=	build.mono
 
-DIST_DEPS:=	FNA.dll \
-		FNA.dll.config \
-		SharpRaven.dll \
+DIST_DEPS:=	SharpRaven.dll \
 		SharpRaven.xml \
 		ICSharpCode.SharpZipLib.dll \
 		Antlr4.Runtime.Standard.dll \
@@ -56,6 +54,13 @@ $(DIST_DEPS): $(BUILDDIR)/%: $(BUILDDIR)/_dist_/%
 
 $(BUILDDIR)/_pkgs_:
 	mkdir $(BUILDDIR)/_pkgs_
+	# FNA
+	wget -O $(BUILDDIR)/_pkgs_/FNA.zip \
+		https://github.com/FNA-XNA/FNA/releases/download/18.09/FNA-1809.zip
+	unzip -d $(BUILDDIR) $(BUILDDIR)/_pkgs_/FNA.zip
+	make -C $(BUILDDIR)/FNA
+	cp $(BUILDDIR)/FNA/bin/Debug/* $(BUILDDIR)
+	# Newtonsoft.Json
 	wget -O $(BUILDDIR)/_pkgs_/Newtonsoft.Json.nuget \
 		https://www.nuget.org/api/v2/package/Newtonsoft.Json/11.0.2
 	unzip -j -d $(BUILDDIR) $(BUILDDIR)/_pkgs_/Newtonsoft.Json.nuget \
