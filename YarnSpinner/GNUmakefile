@@ -1,16 +1,15 @@
 MCS?=		mcs
-OBJDIR:=	../../obj.mono
+OBJDIR:=	../obj.mono
 
-TARGET=		$(OBJDIR)/LibNoise.dll
+TARGET=		$(OBJDIR)/YarnSpinner.dll
 
 CSFLAGS+=	-debug
 #CSFLAGS+=	-define:"TRACE;DEBUG"
 #CSFLAGS+=	-langversion:7
 
-SYSREFS=	System.dll \
-		System.Data.dll \
-		System.Xml.dll
-LIBREFS=	
+SYSREFS=	System.dll
+LIBREFS=	Antlr4.Runtime.Standard.dll \
+		Newtonsoft.Json.dll
 
 LIBDIR=		$(OBJDIR)
 CSFLAGS+=	$(addprefix -r:,$(SYSREFS) $(addprefix $(LIBDIR)/,$(LIBREFS)))
