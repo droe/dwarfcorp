@@ -5,16 +5,18 @@ export MCS
 MONOFLAGS+=	--debug
 
 BUILDDIR:=	build.mono
+CACHEDIR:=	build.mono.cache
 
-DIST_DEPS:=	SharpRaven.dll \
-		SharpRaven.xml \
-		ICSharpCode.SharpZipLib.dll \
+DIST_DEPS:=	Content
+DEPS:=		FNA.dll \
+		Newtonsoft.Json.dll \
 		Antlr4.Runtime.Standard.dll \
-		Content
-STEAM_DEPS:=	Steamworks.NET.dll \
-		steam_appid.txt
+		ICSharpCode.SharpZipLib.dll \
+		SharpRaven.dll \
+		Steamworks.NET.dll \
+		monoconfig
 DIST_DEPS:=	$(addprefix $(BUILDDIR)/,$(DIST_DEPS))
-STEAM_DEPS:=	$(addprefix $(BUILDDIR)/,$(STEAM_DEPS))
+DEPS:=		$(addprefix $(BUILDDIR)/,$(DEPS))
 
 UNAME_S:=	$(shell uname -s)
 UNAME_M:=	$(shell uname -m)
@@ -46,35 +48,72 @@ SUBS=		DwarfCorp/DwarfCorpXNA DwarfCorp/LibNoise YarnSpinner
 all: buildenv $(SUBS)
 
 $(BUILDDIR):
-	mkdir -p $(BUILDDIR)
+	mkdir $(BUILDDIR)
 	ln -s $(DISTDIR) $(BUILDDIR)/_dist_
 
 $(DIST_DEPS): $(BUILDDIR)/%: $(BUILDDIR)/_dist_/%
 	ln -sf $(<:$(BUILDDIR)/%=%) $@
 
-$(BUILDDIR)/_pkgs_:
-	mkdir $(BUILDDIR)/_pkgs_
-	# FNA
-	wget -O $(BUILDDIR)/_pkgs_/FNA.zip \
+$(CACHEDIR)/FNA.zip:
+	mkdir -p $(CACHEDIR)
+	wget -O $@ \
 		https://github.com/FNA-XNA/FNA/releases/download/18.09/FNA-1809.zip
-	unzip -d $(BUILDDIR) $(BUILDDIR)/_pkgs_/FNA.zip
-	make -C $(BUILDDIR)/FNA
-	cp $(BUILDDIR)/FNA/bin/Debug/* $(BUILDDIR)
-	# Newtonsoft.Json
-	wget -O $(BUILDDIR)/_pkgs_/Newtonsoft.Json.nuget \
-		https://www.nuget.org/api/v2/package/Newtonsoft.Json/11.0.2
-	unzip -j -d $(BUILDDIR) $(BUILDDIR)/_pkgs_/Newtonsoft.Json.nuget \
-		lib/net45/Newtonsoft.Json.dll lib/net45/Newtonsoft.Json.xml
 
-pkgs: $(BUILDDIR)/_pkgs_
+$(BUILDDIR)/FNA.dll: $(CACHEDIR)/FNA.zip
+	mkdir -p $(BUILDDIR)/_tmp_
+	unzip -d $(BUILDDIR)/_tmp_ $<
+	make -C $(BUILDDIR)/_tmp_/FNA
+	cp $(BUILDDIR)/_tmp_/FNA/bin/Debug/* $(BUILDDIR)
+	rm -rf $(BUILDDIR)/_tmp_
 
-$(STEAM_DEPS):
-	cp SteamWorks/$(notdir $@) $@
+$(CACHEDIR)/Newtonsoft.Json.nuget:
+	mkdir -p $(CACHEDIR)
+	wget -O $@ https://www.nuget.org/api/v2/package/Newtonsoft.Json/11.0.2
 
-fnalibs:
+$(BUILDDIR)/Newtonsoft.Json.dll: $(CACHEDIR)/Newtonsoft.Json.nuget
+	unzip -j -d $(BUILDDIR) $< \
+		lib/net45/Newtonsoft.Json.dll \
+		lib/net45/Newtonsoft.Json.xml
+	touch $@
+
+$(CACHEDIR)/Antlr4.Runtime.Standard.nuget:
+	mkdir -p $(CACHEDIR)
+	wget -O $@ \
+		https://www.nuget.org/api/v2/package/Antlr4.Runtime.Standard/4.7.1.1
+
+$(BUILDDIR)/Antlr4.Runtime.Standard.dll: $(CACHEDIR)/Antlr4.Runtime.Standard.nuget
+	unzip -j -d $(BUILDDIR) $< \
+		lib/net35/Antlr4.Runtime.Standard.dll \
+		lib/net35/Antlr4.Runtime.Standard.xml
+	touch $@
+
+$(CACHEDIR)/SharpZipLib.nuget:
+	mkdir -p $(CACHEDIR)
+	wget -O $@ https://www.nuget.org/api/v2/package/SharpZipLib/1.0.0
+
+$(BUILDDIR)/ICSharpCode.SharpZipLib.dll: $(CACHEDIR)/SharpZipLib.nuget
+	unzip -j -d $(BUILDDIR) $< \
+		lib/net45/ICSharpCode.SharpZipLib.dll \
+		lib/net45/ICSharpCode.SharpZipLib.xml
+	touch $@
+
+$(CACHEDIR)/SharpRaven.nuget:
+	mkdir -p $(CACHEDIR)
+	wget -O $@ https://www.nuget.org/api/v2/package/SharpRaven/2.4.0
+
+$(BUILDDIR)/SharpRaven.dll: $(CACHEDIR)/SharpRaven.nuget
+	unzip -j -d $(BUILDDIR) $< \
+		lib/net471/SharpRaven.dll
+	touch $@
+
+$(BUILDDIR)/Steamworks.NET.dll:
+	cp SteamWorks/Steamworks.NET.dll $(BUILDDIR)
+	cp SteamWorks/steam_appid.txt $(BUILDDIR)
+
+$(BUILDDIR)/monoconfig:
 	cp -r $(FNALIBS) $(BUILDDIR)
 
-buildenv: $(BUILDDIR) $(DIST_DEPS) pkgs $(STEAM_DEPS) fnalibs
+buildenv: $(BUILDDIR) $(DIST_DEPS) $(DEPS)
 
 DwarfCorp/DwarfCorpXNA: DwarfCorp/LibNoise YarnSpinner
 
@@ -84,6 +123,9 @@ $(SUBS):
 clean: SUBTARGET=clean
 clean: $(SUBS)
 	rm -rf $(BUILDDIR)
+
+realclean: clean
+	rm -rf $(CACHEDIR)
 
 launch: buildenv $(SUBS)
 	cd $(BUILDDIR) && $(MONO) $(MONOFLAGS) DwarfCorpFNA.mono
