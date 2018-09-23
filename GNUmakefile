@@ -51,9 +51,6 @@ $(BUILDDIR):
 	mkdir $(BUILDDIR)
 	ln -s $(DISTDIR) $(BUILDDIR)/_dist_
 
-$(DIST_DEPS): $(BUILDDIR)/%: $(BUILDDIR)/_dist_/%
-	ln -sf $(<:$(BUILDDIR)/%=%) $@
-
 $(CACHEDIR)/FNA.zip:
 	mkdir -p $(CACHEDIR)
 	wget -O $@ \
@@ -68,12 +65,11 @@ $(BUILDDIR)/FNA.dll: $(CACHEDIR)/FNA.zip
 
 $(CACHEDIR)/Newtonsoft.Json.nuget:
 	mkdir -p $(CACHEDIR)
-	wget -O $@ https://www.nuget.org/api/v2/package/Newtonsoft.Json/11.0.2
+	wget -O $@ https://www.nuget.org/api/v2/package/Newtonsoft.Json/9.0.1
 
 $(BUILDDIR)/Newtonsoft.Json.dll: $(CACHEDIR)/Newtonsoft.Json.nuget
 	unzip -j -d $(BUILDDIR) $< \
-		lib/net45/Newtonsoft.Json.dll \
-		lib/net45/Newtonsoft.Json.xml
+		lib/net45/Newtonsoft.Json.*
 	touch $@
 
 $(CACHEDIR)/Antlr4.Runtime.Standard.nuget:
@@ -83,27 +79,25 @@ $(CACHEDIR)/Antlr4.Runtime.Standard.nuget:
 
 $(BUILDDIR)/Antlr4.Runtime.Standard.dll: $(CACHEDIR)/Antlr4.Runtime.Standard.nuget
 	unzip -j -d $(BUILDDIR) $< \
-		lib/net35/Antlr4.Runtime.Standard.dll \
-		lib/net35/Antlr4.Runtime.Standard.xml
+		lib/net35/Antlr4.Runtime.Standard.*
 	touch $@
 
 $(CACHEDIR)/SharpZipLib.nuget:
 	mkdir -p $(CACHEDIR)
-	wget -O $@ https://www.nuget.org/api/v2/package/SharpZipLib/1.0.0
+	wget -O $@ https://www.nuget.org/api/v2/package/SharpZipLib/0.86.0
 
 $(BUILDDIR)/ICSharpCode.SharpZipLib.dll: $(CACHEDIR)/SharpZipLib.nuget
 	unzip -j -d $(BUILDDIR) $< \
-		lib/net45/ICSharpCode.SharpZipLib.dll \
-		lib/net45/ICSharpCode.SharpZipLib.xml
+		lib/20/ICSharpCode.SharpZipLib.*
 	touch $@
 
 $(CACHEDIR)/SharpRaven.nuget:
 	mkdir -p $(CACHEDIR)
-	wget -O $@ https://www.nuget.org/api/v2/package/SharpRaven/2.4.0
+	wget -O $@ https://www.nuget.org/api/v2/package/SharpRaven/2.2.0
 
 $(BUILDDIR)/SharpRaven.dll: $(CACHEDIR)/SharpRaven.nuget
 	unzip -j -d $(BUILDDIR) $< \
-		lib/net471/SharpRaven.dll
+		lib/net45/SharpRaven.*
 	touch $@
 
 $(BUILDDIR)/Steamworks.NET.dll:
@@ -113,7 +107,10 @@ $(BUILDDIR)/Steamworks.NET.dll:
 $(BUILDDIR)/monoconfig:
 	cp -r $(FNALIBS) $(BUILDDIR)
 
-buildenv: $(BUILDDIR) $(DIST_DEPS) $(DEPS)
+$(DIST_DEPS): $(BUILDDIR)/%: $(BUILDDIR)/_dist_/%
+	ln -sf $(<:$(BUILDDIR)/%=%) $@
+
+buildenv: $(BUILDDIR) $(DEPS) $(DIST_DEPS)
 
 DwarfCorp/DwarfCorpXNA: DwarfCorp/LibNoise YarnSpinner
 
