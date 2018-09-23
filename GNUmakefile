@@ -26,7 +26,13 @@ OSX_DEPS:=	monoconfig \
 APP_DEPS:=	$(addprefix $(OBJDIR)/,$(APP_DEPS))
 STEAM_DEPS:=	$(addprefix $(OBJDIR)/,$(STEAM_DEPS))
 OSX_DEPS:=	$(addprefix $(OBJDIR)/,$(OSX_DEPS))
+
+UNAME_S:=	$(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
 ALL_DEPS:=	$(APP_DEPS) $(STEAM_DEPS) $(OSX_DEPS)
+else
+$(error $(UNAME_S) not supported yet)
+endif
 
 SUBS=		DwarfCorp/DwarfCorpXNA DwarfCorp/LibNoise YarnSpinner
 
@@ -44,9 +50,11 @@ $(STEAM_DEPS):
 	rm -f $@
 	cp SteamWorks/$(notdir $@) $@
 
+ifeq ($(UNAME_S),Darwin)
 $(OSX_DEPS):
 	rm -rf $@
 	cp -r DwarfCorp/DwarfCorpFNA/FNA_libs/osx/$(notdir $@) $@
+endif
 
 objdir: $(OBJDIR) $(ALL_DEPS)
 
