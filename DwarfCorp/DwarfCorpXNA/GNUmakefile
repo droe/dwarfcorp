@@ -1,7 +1,7 @@
 MCS?=		mcs
-OBJDIR:=	../../obj.mono
+BUILDDIR:=	../../build.mono
 
-TARGET=		$(OBJDIR)/DwarfCorpFNA.mono.osx
+TARGET=		$(BUILDDIR)/DwarfCorpFNA.mono
 
 CSFLAGS+=	-debug
 CSFLAGS+=	-define:"GEMFNA;WINDOWS"
@@ -20,7 +20,7 @@ LIBREFS=	FNA.dll \
 		ICSharpCode.SharpZipLib.dll \
 		Antlr4.Runtime.Standard.dll
 
-LIBDIR=		$(OBJDIR)
+LIBDIR=		$(BUILDDIR)
 CSFLAGS+=	$(addprefix -r:,$(SYSREFS) $(addprefix $(LIBDIR)/,$(LIBREFS)))
 
 
@@ -32,5 +32,5 @@ $(TARGET):
 clean:
 	rm -f $(TARGET)
 
-.PHONY: all install launch clean
+.PHONY: all clean
 

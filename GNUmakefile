@@ -4,9 +4,9 @@ export MCS
 
 MONOFLAGS+=	--debug
 
-OBJDIR:=	obj.mono
+BUILDDIR:=	build.mono
 
-APP_DEPS:=	FNA.dll \
+DIST_DEPS:=	FNA.dll \
 		FNA.dll.config \
 		Newtonsoft.Json.dll \
 		Newtonsoft.Json.xml \
@@ -17,25 +17,25 @@ APP_DEPS:=	FNA.dll \
 		Content
 STEAM_DEPS:=	Steamworks.NET.dll \
 		steam_appid.txt
-APP_DEPS:=	$(addprefix $(OBJDIR)/,$(APP_DEPS))
-STEAM_DEPS:=	$(addprefix $(OBJDIR)/,$(STEAM_DEPS))
+DIST_DEPS:=	$(addprefix $(BUILDDIR)/,$(DIST_DEPS))
+STEAM_DEPS:=	$(addprefix $(BUILDDIR)/,$(STEAM_DEPS))
 
 UNAME_S:=	$(shell uname -s)
 UNAME_M:=	$(shell uname -m)
 
 FNALIBSDIR:=	DwarfCorp/DwarfCorpFNA/FNA_libs
 ifeq ($(UNAME_S),Darwin)
-APPDIR?=	"$(HOME)/Library/Application Support/Steam/steamapps/common/DwarfCorp/DwarfCorp.app/Contents/MacOS"
+DISTDIR?=	"$(HOME)/Library/Application Support/Steam/steamapps/common/DwarfCorp/DwarfCorp.app/Contents/MacOS"
 FNALIBS:=	$(FNALIBSDIR)/osx/mono* \
 		$(FNALIBSDIR)/osx/osx/*
 else
 ifeq ($(UNAME_S),Linux)
 ifeq ($(UNAME_M),x86_64)
-APPDIR?=	"$(HOME)/.steam/steam/SteamApps/common/DwarfCorp/linux64"
+DISTDIR?=	"$(HOME)/.steam/steam/SteamApps/common/DwarfCorp/linux64"
 FNALIBS:=	$(FNALIBSDIR)/lib64/mono* \
 		$(FNALIBSDIR)/lib64/lib*
 else
-APPDIR?=	"$(HOME)/.steam/steam/SteamApps/common/DwarfCorp/linux32"
+DISTDIR?=	"$(HOME)/.steam/steam/SteamApps/common/DwarfCorp/linux32"
 FNALIBS:=	$(FNALIBSDIR)/lib/mono* \
 		$(FNALIBSDIR)/lib/lib*
 endif
@@ -47,22 +47,22 @@ endif
 SUBS=		DwarfCorp/DwarfCorpXNA DwarfCorp/LibNoise YarnSpinner
 
 
-all: objdir $(SUBS)
+all: buildenv $(SUBS)
 
-$(OBJDIR):
-	mkdir -p $(OBJDIR)
-	ln -s $(APPDIR) $(OBJDIR)/_app_
+$(BUILDDIR):
+	mkdir -p $(BUILDDIR)
+	ln -s $(DISTDIR) $(BUILDDIR)/_dist_
 
-$(APP_DEPS): $(OBJDIR)/%: $(OBJDIR)/_app_/%
-	ln -sf $(<:$(OBJDIR)/%=%) $@
+$(DIST_DEPS): $(BUILDDIR)/%: $(BUILDDIR)/_dist_/%
+	ln -sf $(<:$(BUILDDIR)/%=%) $@
 
 $(STEAM_DEPS):
 	cp SteamWorks/$(notdir $@) $@
 
 fnalibs:
-	cp -r $(FNALIBS) $(OBJDIR)
+	cp -r $(FNALIBS) $(BUILDDIR)
 
-objdir: $(OBJDIR) $(APP_DEPS) $(STEAM_DEPS) fnalibs
+buildenv: $(BUILDDIR) $(DIST_DEPS) $(STEAM_DEPS) fnalibs
 
 DwarfCorp/DwarfCorpXNA: DwarfCorp/LibNoise YarnSpinner
 
@@ -71,10 +71,10 @@ $(SUBS):
 
 clean: SUBTARGET=clean
 clean: $(SUBS)
-	rm -rf $(OBJDIR)
+	rm -rf $(BUILDDIR)
 
-launch: objdir $(SUBS)
-	cd $(OBJDIR) && $(MONO) $(MONOFLAGS) DwarfCorpFNA.mono.osx
+launch: buildenv $(SUBS)
+	cd $(BUILDDIR) && $(MONO) $(MONOFLAGS) DwarfCorpFNA.mono
 
-.PHONY: all objdir fnalibs clean launch $(SUBS)
+.PHONY: all buildenv fnalibs clean launch $(SUBS)
 

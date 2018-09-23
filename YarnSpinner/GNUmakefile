@@ -1,7 +1,7 @@
 MCS?=		mcs
-OBJDIR:=	../obj.mono
+BUILDDIR:=	../build.mono
 
-TARGET=		$(OBJDIR)/YarnSpinner.dll
+TARGET=		$(BUILDDIR)/YarnSpinner.dll
 
 CSFLAGS+=	-debug
 #CSFLAGS+=	-define:"TRACE;DEBUG"
@@ -11,13 +11,13 @@ SYSREFS=	System.dll
 LIBREFS=	Antlr4.Runtime.Standard.dll \
 		Newtonsoft.Json.dll
 
-LIBDIR=		$(OBJDIR)
+LIBDIR=		$(BUILDDIR)
 CSFLAGS+=	$(addprefix -r:,$(SYSREFS) $(addprefix $(LIBDIR)/,$(LIBREFS)))
 
 
 all: $(TARGET)
 
-$(TARGET): $(OBJDIR)
+$(TARGET):
 	$(MCS) $(CSFLAGS) -recurse:'*.cs' -target:library -out:$@
 
 clean:
