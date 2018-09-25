@@ -17,7 +17,7 @@ CSFLAGS+=	$(addprefix -r:,$(SYSREFS) $(addprefix $(LIBDIR)/,$(LIBREFS)))
 
 all: $(TARGET)
 
-$(TARGET):
+$(TARGET): $(shell find . -name '*.cs') GNUmakefile
 	$(MCS) $(CSFLAGS) -recurse:'*.cs' -target:library -out:$@
 
 clean:

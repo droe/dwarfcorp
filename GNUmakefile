@@ -1,11 +1,12 @@
-MONO?=		mono
-MCS?=		mcs
-export MCS
-
-MONOFLAGS+=	--debug
-
 BUILDDIR:=	build.mono
 CACHEDIR:=	build.mono.cache
+
+MCS?=		mcs
+MONO?=		mono
+MONOFLAGS+=	--debug
+
+ASSEMBLY:=	DwarfCorpFNA.mono
+SUBS:=		DwarfCorp/DwarfCorpXNA DwarfCorp/LibNoise YarnSpinner
 
 DIST_DEPS:=	Content
 DEPS:=		FNA.dll \
@@ -20,7 +21,6 @@ DEPS:=		$(addprefix $(BUILDDIR)/,$(DEPS))
 
 UNAME_S:=	$(shell uname -s)
 UNAME_M:=	$(shell uname -m)
-
 FNALIBSDIR:=	DwarfCorp/DwarfCorpFNA/FNA_libs
 ifeq ($(UNAME_S),Darwin)
 DISTDIR?=	"$(HOME)/Library/Application Support/Steam/steamapps/common/DwarfCorp/DwarfCorp.app/Contents/MacOS"
@@ -42,30 +42,43 @@ $(error $(UNAME_S) $(UNAME_M) not supported)
 endif
 endif
 
-SUBS=		DwarfCorp/DwarfCorpXNA DwarfCorp/LibNoise YarnSpinner
-
+ifndef DOWNLOAD_TO
+CURL?=		$(shell which curl||echo notfound)
+ifneq ($(CURL),notfound)
+DOWNLOAD_TO:=	$(CURL) -R -L -o
+else
+WGET?=		$(shell which wget||echo notfound)
+ifneq ($(WGET),notfound)
+DOWNLOAD_TO:=	$(WGET) -O
+else
+$(error None of curl or wget found in PATH and DOWNLOAD_TO not set)
+endif
+endif
+endif
 
 package=	$(word 2,$(subst @, ,$1))
 version=	$(lastword $(subst @, ,$1))
-fnaurl=		https://github.com/FNA-XNA/FNA/releases/download/$(call package,$1)/$(call version,$1)
+fnaurl=		https://github.com/FNA-XNA/FNA/releases/download/$(call package,$1)/$(call version,$1).zip
 nugeturl=	https://www.nuget.org/api/v2/package/$(call package,$1)/$(call version,$1)
+
+export MCS
 
 
 all: buildenv $(SUBS)
 
 $(CACHEDIR)/fna@%:
 	mkdir -p $(CACHEDIR)
-	wget -O $@ $(call fnaurl,$@)
+	$(DOWNLOAD_TO) $@ $(call fnaurl,$@)
 
 $(CACHEDIR)/nuget@%:
 	mkdir -p $(CACHEDIR)
-	wget -O $@ $(call nugeturl,$@)
+	$(DOWNLOAD_TO) $@ $(call nugeturl,$@)
 
 $(BUILDDIR):
 	mkdir $(BUILDDIR)
 	ln -s $(DISTDIR) $(BUILDDIR)/_dist_
 
-$(BUILDDIR)/FNA.dll: $(CACHEDIR)/fna@18.09@FNA-1809.zip
+$(BUILDDIR)/FNA.dll: $(CACHEDIR)/fna@18.09@FNA-1809
 	mkdir -p $(BUILDDIR)/_tmp_
 	unzip -d $(BUILDDIR)/_tmp_ $<
 	make -C $(BUILDDIR)/_tmp_/FNA
@@ -113,7 +126,7 @@ realclean: clean
 	rm -rf $(CACHEDIR)
 
 launch: buildenv $(SUBS)
-	cd $(BUILDDIR) && $(MONO) $(MONOFLAGS) DwarfCorpFNA.mono
+	cd $(BUILDDIR) && $(MONO) $(MONOFLAGS) $(ASSEMBLY)
 
 # https://www.mono-project.com/docs/debug+profile/profile/profiler/
 profile: MONOFLAGS+=--profile=log:alloc,calls,report,output=../profiler.report
