@@ -126,7 +126,7 @@ realclean: clean
 	rm -rf $(CACHEDIR)
 
 launch: buildenv $(SUBS)
-	cd $(BUILDDIR) && $(MONO) $(MONOFLAGS) $(ASSEMBLY)
+	cd $(BUILDDIR) && DYLD_LIBRARY_PATH=$(DYLD_LIBRARY_PATH):. $(MONO) $(MONOFLAGS) $(ASSEMBLY)
 
 # https://www.mono-project.com/docs/debug+profile/profile/profiler/
 profile: MONOFLAGS+=--profile=log:alloc,calls,report,output=../profiler.report
